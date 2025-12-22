@@ -1,0 +1,1291 @@
+/* ========================================
+   基本スタイル
+======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+/* ========================================
+   ヘッダー
+======================================== */
+header {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    color: white;
+    padding: 20px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+nav {
+    display: flex;
+    gap: 12px;
+}
+
+/* ========================================
+   認証セクション
+======================================== */
+.auth-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-auth {
+    background: white;
+    color: #4a5568;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-auth:hover {
+    background: #f7fafc;
+    transform: translateY(-1px);
+}
+
+.google-icon {
+    font-weight: bold;
+    color: #4285f4;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.user-name {
+    font-size: 0.9rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-auth-small {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-auth-small:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   設定警告メッセージ
+======================================== */
+.config-warning {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 24px;
+}
+
+.config-warning h3 {
+    color: #b45309;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.config-warning p {
+    color: #92400e;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+/* ========================================
+   ローディングオーバーレイ
+======================================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+    color: #4a5568;
+    font-size: 1rem;
+}
+
+.nav-btn {
+    padding: 10px 24px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: transparent;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-btn.active {
+    background: white;
+    color: #2d3748;
+    border-color: white;
+}
+
+/* ========================================
+   ビューセクション
+======================================== */
+.view {
+    padding: 24px 32px;
+}
+
+/* ========================================
+   フィルターセクション
+======================================== */
+.filter-section {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid #e2e8f0;
+}
+
+.filter-section h3 {
+    margin-bottom: 16px;
+    color: #4a5568;
+    font-size: 1.1rem;
+}
+
+/* フィルターヘッダー（PC用は通常表示） */
+.filter-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filter-header h3 {
+    margin-bottom: 0;
+}
+
+.filter-toggle-icon {
+    display: none;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filter-group label {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.filter-group input,
+.filter-group select {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    min-width: 150px;
+    transition: border-color 0.2s ease;
+}
+
+.filter-group input:focus,
+.filter-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ========================================
+   ボタンスタイル
+======================================== */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e0;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+/* ========================================
+   アクションセクション
+======================================== */
+.action-section {
+    margin-bottom: 24px;
+}
+
+/* ========================================
+   テーブルスタイル
+======================================== */
+.task-table-container {
+    overflow-x: auto;
+}
+
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.task-table thead {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    color: white;
+}
+
+.task-table th {
+    padding: 16px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.task-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+.task-table tbody tr:hover {
+    background: #f7fafc;
+}
+
+.task-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 重要度バッジ */
+.priority-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.priority-high {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.priority-medium {
+    background: #feebc8;
+    color: #c05621;
+}
+
+.priority-low {
+    background: #c6f6d5;
+    color: #276749;
+}
+
+/* 進捗バー */
+.progress-container {
+    width: 100px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 8px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 4px;
+}
+
+/* 着手中バッジ */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+.status-inactive {
+    background: #e2e8f0;
+    color: #718096;
+}
+
+/* メモのツールチップ */
+.memo-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+
+/* 操作ボタン */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.no-task-message {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+    font-size: 1.1rem;
+}
+
+/* ========================================
+   モーダルスタイル
+======================================== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-small {
+    max-width: 400px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    font-size: 1.3rem;
+    color: #2d3748;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #718096;
+    transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+    color: #e53e3e;
+}
+
+/* ========================================
+   フォームスタイル
+======================================== */
+#taskForm {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.required {
+    color: #e53e3e;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+#deleteModal .form-actions {
+    padding: 0 24px 24px;
+}
+
+#deleteModal p {
+    padding: 24px;
+    color: #4a5568;
+}
+
+/* ========================================
+   カレンダースタイル
+======================================== */
+.calendar-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.calendar-header h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    min-width: 200px;
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-day-header {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.calendar-days-container {
+    display: contents;
+}
+
+.calendar-day {
+    background: white;
+    min-height: 120px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day.other-month {
+    background: #f7fafc;
+    color: #a0aec0;
+}
+
+.calendar-day.today {
+    background: #ebf8ff;
+}
+
+.calendar-day-number {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #4a5568;
+}
+
+.calendar-day.other-month .calendar-day-number {
+    color: #a0aec0;
+}
+
+.calendar-day.today .calendar-day-number {
+    color: #3182ce;
+    background: #3182ce;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-task {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.calendar-task:hover {
+    transform: scale(1.02);
+}
+
+.calendar-task.priority-high-bg {
+    background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+}
+
+.calendar-task.priority-medium-bg {
+    background: linear-gradient(135deg, #f6ad55 0%, #dd6b20 100%);
+}
+
+.calendar-task.priority-low-bg {
+    background: linear-gradient(135deg, #68d391 0%, #38a169 100%);
+}
+
+.calendar-task-more {
+    font-size: 0.75rem;
+    color: #718096;
+    text-align: center;
+    padding: 4px;
+}
+
+/* ========================================
+   レスポンシブデザイン
+======================================== */
+
+/* PC専用・モバイル専用の表示切り替え */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    body {
+        padding: 0;
+        background: #f7fafc;
+    }
+
+    .container {
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    header {
+        padding: 12px 16px;
+        flex-direction: column;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        gap: 12px;
+    }
+
+    .header-top {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    /* 認証セクション（モバイル） */
+    .auth-section {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-auth {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+    }
+
+    .user-info {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .user-name {
+        max-width: 100px;
+        font-size: 0.85rem;
+    }
+
+    .config-warning {
+        margin: 12px;
+        padding: 12px 16px;
+    }
+
+    .config-warning h3 {
+        font-size: 0.95rem;
+    }
+
+    .config-warning p {
+        font-size: 0.85rem;
+    }
+
+    nav {
+        width: 100%;
+    }
+
+    .nav-btn {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+
+    .view {
+        padding: 12px;
+    }
+
+    /* フィルターセクション - 折りたたみ対応 */
+    .filter-section {
+        padding: 0;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        cursor: pointer;
+        background: #f7fafc;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .filter-header h3 {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .filter-toggle-icon {
+        font-size: 0.8rem;
+        transition: transform 0.3s ease;
+    }
+
+    .filter-section.collapsed .filter-toggle-icon {
+        transform: rotate(-90deg);
+    }
+
+    .filter-section.collapsed .filter-controls {
+        display: none;
+    }
+
+    .filter-controls {
+        padding: 0 16px 16px;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group label {
+        font-size: 0.9rem;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px; /* iOS ズーム防止 */
+        border-radius: 10px;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .filter-buttons .btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    /* タスク追加ボタン */
+    .action-section {
+        margin-bottom: 16px;
+    }
+
+    .action-section .btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+    }
+
+    /* カレンダー */
+    .calendar-header {
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .calendar-header h2 {
+        font-size: 1.2rem;
+        min-width: 150px;
+        order: -1;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .calendar-header .btn {
+        flex: 1;
+        padding: 12px 8px;
+        font-size: 0.9rem;
+    }
+
+    .calendar-grid {
+        border-radius: 8px;
+    }
+
+    .calendar-day-header {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+
+    .calendar-day {
+        min-height: 60px;
+        padding: 4px 2px;
+    }
+
+    .calendar-day-number {
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .calendar-day.today .calendar-day-number {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+
+    .calendar-task {
+        font-size: 0.65rem;
+        padding: 2px 3px;
+        margin-bottom: 2px;
+    }
+
+    .calendar-task-more {
+        font-size: 0.65rem;
+    }
+
+    /* モーダル */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    #taskForm {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        font-size: 0.95rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="date"],
+    .form-group select,
+    .form-group textarea {
+        padding: 14px;
+        font-size: 16px; /* iOS ズーム防止 */
+        border-radius: 10px;
+    }
+
+    .form-group input[type="range"] {
+        height: 32px;
+    }
+
+    .checkbox-group label {
+        padding: 12px 0;
+        font-size: 1rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1rem;
+    }
+
+    #deleteModal p {
+        padding: 20px;
+        font-size: 1rem;
+    }
+
+    #deleteModal .form-actions {
+        padding: 0 20px 20px;
+    }
+}
+
+/* ========================================
+   タスクカード（モバイル用）
+======================================== */
+.task-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid #667eea;
+}
+
+.task-card.priority-high-border {
+    border-left-color: #e53e3e;
+}
+
+.task-card.priority-medium-border {
+    border-left-color: #dd6b20;
+}
+
+.task-card.priority-low-border {
+    border-left-color: #38a169;
+}
+
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+
+.task-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    flex: 1;
+    word-break: break-word;
+}
+
+.task-card-badges {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.task-card-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.task-card-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.task-card-info-label {
+    font-size: 0.75rem;
+    color: #718096;
+    text-transform: uppercase;
+}
+
+.task-card-info-value {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.task-card-progress {
+    margin-bottom: 12px;
+}
+
+.task-card-progress-label {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.task-card-progress-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.task-card-progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.task-card-memo {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #4a5568;
+    line-height: 1.5;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.task-card-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.task-card-actions .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+}
+
+/* ========================================
+   iPhone 13 mini 以下（375px以下）の最適化
+======================================== */
+@media (max-width: 390px) {
+    header h1 {
+        font-size: 1.2rem;
+    }
+
+    .nav-btn {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .view {
+        padding: 10px;
+    }
+
+    .task-card {
+        padding: 14px;
+    }
+
+    .task-card-title {
+        font-size: 1rem;
+    }
+
+    .task-card-info {
+        gap: 8px;
+    }
+
+    .task-card-actions .btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .calendar-day {
+        min-height: 50px;
+    }
+
+    .calendar-task {
+        font-size: 0.6rem;
+        padding: 1px 2px;
+    }
+}
+
+/* ========================================
+   タッチデバイス向けの最適化
+======================================== */
+@media (hover: none) and (pointer: coarse) {
+    /* タッチフィードバックの改善 */
+    .btn {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    .btn:active {
+        transform: scale(0.97);
+        opacity: 0.9;
+    }
+
+    .nav-btn:active {
+        transform: scale(0.97);
+    }
+
+    .task-card {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .task-card:active {
+        background: #f8fafc;
+    }
+
+    /* ホバー効果を無効化 */
+    .btn-primary:hover,
+    .btn-success:hover,
+    .btn-danger:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .calendar-task:hover {
+        transform: none;
+    }
+}
+
+/* ========================================
+   セーフエリア対応（iPhone X以降）
+======================================== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    body {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .modal-content {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* ========================================
+   期限切れスタイル
+======================================== */
+.deadline-overdue {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+.deadline-today {
+    color: #dd6b20;
+    font-weight: 600;
+}
+
+.deadline-soon {
+    color: #d69e2e;
+}

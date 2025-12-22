@@ -1,0 +1,767 @@
+// ========================================
+// タスク管理アプリ - メインJavaScript（Firebase対応版）
+// ========================================
+
+// グローバル変数
+let tasks = [];
+let deleteTargetId = null;
+let currentCalendarDate = new Date();
+let currentUser = null;
+let db = null;
+let unsubscribeSnapshot = null;
+let isFirebaseMode = false;
+
+// DOM要素の取得
+const elements = {
+    // 認証
+    authSection: document.getElementById('authSection'),
+    loginBtn: document.getElementById('loginBtn'),
+    userInfo: document.getElementById('userInfo'),
+    userAvatar: document.getElementById('userAvatar'),
+    userName: document.getElementById('userName'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    configWarning: document.getElementById('configWarning'),
+    loadingOverlay: document.getElementById('loadingOverlay'),
+
+    // ナビゲーション
+    showListBtn: document.getElementById('showListBtn'),
+    showCalendarBtn: document.getElementById('showCalendarBtn'),
+    listView: document.getElementById('listView'),
+    calendarView: document.getElementById('calendarView'),
+
+    // フィルター
+    filterSection: document.querySelector('.filter-section'),
+    filterToggle: document.getElementById('filterToggle'),
+    filterControls: document.getElementById('filterControls'),
+    filterDeadlineFrom: document.getElementById('filterDeadlineFrom'),
+    filterDeadlineTo: document.getElementById('filterDeadlineTo'),
+    filterPriority: document.getElementById('filterPriority'),
+    filterInProgress: document.getElementById('filterInProgress'),
+    applyFilterBtn: document.getElementById('applyFilterBtn'),
+    clearFilterBtn: document.getElementById('clearFilterBtn'),
+
+    // タスク一覧（PC）
+    addTaskBtn: document.getElementById('addTaskBtn'),
+    taskTableBody: document.getElementById('taskTableBody'),
+    noTaskMessage: document.getElementById('noTaskMessage'),
+
+    // タスク一覧（モバイル）
+    taskCardsContainer: document.getElementById('taskCardsContainer'),
+    noTaskMessageMobile: document.getElementById('noTaskMessageMobile'),
+
+    // タスクモーダル
+    taskModal: document.getElementById('taskModal'),
+    modalTitle: document.getElementById('modalTitle'),
+    closeModalBtn: document.getElementById('closeModalBtn'),
+    taskForm: document.getElementById('taskForm'),
+    taskId: document.getElementById('taskId'),
+    taskName: document.getElementById('taskName'),
+    taskPriority: document.getElementById('taskPriority'),
+    taskDeadline: document.getElementById('taskDeadline'),
+    taskProgress: document.getElementById('taskProgress'),
+    progressValue: document.getElementById('progressValue'),
+    taskMemo: document.getElementById('taskMemo'),
+    taskInProgress: document.getElementById('taskInProgress'),
+    cancelBtn: document.getElementById('cancelBtn'),
+
+    // 削除モーダル
+    deleteModal: document.getElementById('deleteModal'),
+    closeDeleteModalBtn: document.getElementById('closeDeleteModalBtn'),
+    confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+    cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+
+    // カレンダー
+    prevMonthBtn: document.getElementById('prevMonthBtn'),
+    nextMonthBtn: document.getElementById('nextMonthBtn'),
+    currentMonthYear: document.getElementById('currentMonthYear'),
+    calendarDays: document.getElementById('calendarDays')
+};
+
+// ========================================
+// 初期化
+// ========================================
+document.addEventListener('DOMContentLoaded', () => {
+    initializeApp();
+});
+
+async function initializeApp() {
+    showLoading(true);
+    
+    // Firebase設定をチェック
+    if (typeof isFirebaseConfigured === 'function' && isFirebaseConfigured()) {
+        try {
+            // Firebaseを初期化
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            isFirebaseMode = true;
+            
+            // 認証状態の監視を開始
+            setupAuthStateListener();
+            
+            // ログインボタンを表示
+            elements.loginBtn.style.display = 'flex';
+        } catch (error) {
+            console.error('Firebase初期化エラー:', error);
+            fallbackToLocalStorage();
+        }
+    } else {
+        // Firebase未設定の場合
+        fallbackToLocalStorage();
+    }
+    
+    setupEventListeners();
+    initMobileFeatures();
+}
+
+function fallbackToLocalStorage() {
+    console.log('ローカルストレージモードで動作します');
+    isFirebaseMode = false;
+    elements.configWarning.style.display = 'block';
+    elements.loginBtn.style.display = 'none';
+    loadTasksFromLocalStorage();
+    renderAll();
+    showLoading(false);
+}
+
+function showLoading(show) {
+    if (elements.loadingOverlay) {
+        elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// ========================================
+// Firebase認証
+// ========================================
+function setupAuthStateListener() {
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // ログイン済み
+            currentUser = user;
+            updateAuthUI(true);
+            subscribeToTasks();
+        } else {
+            // 未ログイン
+            currentUser = null;
+            updateAuthUI(false);
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            // 未ログイン時はローカルストレージから読み込み
+            loadTasksFromLocalStorage();
+            renderAll();
+        }
+        showLoading(false);
+    });
+}
+
+function updateAuthUI(isLoggedIn) {
+    if (isLoggedIn && currentUser) {
+        elements.loginBtn.style.display = 'none';
+        elements.userInfo.style.display = 'flex';
+        elements.userAvatar.src = currentUser.photoURL || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%23667eea"/><text x="50" y="65" text-anchor="middle" fill="white" font-size="40">👤</text></svg>';
+        elements.userName.textContent = currentUser.displayName || 'ユーザー';
+        elements.configWarning.style.display = 'none';
+    } else {
+        elements.loginBtn.style.display = 'flex';
+        elements.userInfo.style.display = 'none';
+        if (isFirebaseMode) {
+            elements.configWarning.style.display = 'none';
+        }
+    }
+}
+
+async function handleLogin() {
+    try {
+        showLoading(true);
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebase.auth().signInWithPopup(provider);
+    } catch (error) {
+        console.error('ログインエラー:', error);
+        alert('ログインに失敗しました: ' + error.message);
+        showLoading(false);
+    }
+}
+
+async function handleLogout() {
+    try {
+        await firebase.auth().signOut();
+        tasks = [];
+        renderAll();
+    } catch (error) {
+        console.error('ログアウトエラー:', error);
+    }
+}
+
+// ========================================
+// Firestore操作
+// ========================================
+function subscribeToTasks() {
+    if (!currentUser || !db) return;
+
+    // 既存のリスナーを解除
+    if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+    }
+
+    // リアルタイム同期を開始
+    unsubscribeSnapshot = db.collection('users')
+        .doc(currentUser.uid)
+        .collection('tasks')
+        .orderBy('createdAt', 'desc')
+        .onSnapshot((snapshot) => {
+            tasks = [];
+            snapshot.forEach((doc) => {
+                tasks.push({ id: doc.id, ...doc.data() });
+            });
+            renderAll();
+        }, (error) => {
+            console.error('タスク取得エラー:', error);
+        });
+}
+
+async function saveTaskToFirestore(taskData) {
+    if (!currentUser || !db) return;
+
+    try {
+        const taskRef = db.collection('users')
+            .doc(currentUser.uid)
+            .collection('tasks');
+
+        if (taskData.id && !taskData.id.startsWith('task_')) {
+            // 既存タスクの更新
+            await taskRef.doc(taskData.id).update({
+                ...taskData,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            // 新規タスクの追加
+            const { id, ...dataWithoutId } = taskData;
+            await taskRef.add({
+                ...dataWithoutId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    } catch (error) {
+        console.error('タスク保存エラー:', error);
+        alert('タスクの保存に失敗しました');
+    }
+}
+
+async function deleteTaskFromFirestore(taskId) {
+    if (!currentUser || !db) return;
+
+    try {
+        await db.collection('users')
+            .doc(currentUser.uid)
+            .collection('tasks')
+            .doc(taskId)
+            .delete();
+    } catch (error) {
+        console.error('タスク削除エラー:', error);
+        alert('タスクの削除に失敗しました');
+    }
+}
+
+// ========================================
+// LocalStorage操作（フォールバック用）
+// ========================================
+function loadTasksFromLocalStorage() {
+    const stored = localStorage.getItem('tasks');
+    tasks = stored ? JSON.parse(stored) : [];
+}
+
+function saveTasksToLocalStorage() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+// ========================================
+// イベントリスナーの設定
+// ========================================
+function setupEventListeners() {
+    // 認証
+    if (elements.loginBtn) {
+        elements.loginBtn.addEventListener('click', handleLogin);
+    }
+    if (elements.logoutBtn) {
+        elements.logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // ナビゲーション
+    elements.showListBtn.addEventListener('click', () => switchView('list'));
+    elements.showCalendarBtn.addEventListener('click', () => switchView('calendar'));
+
+    // フィルター
+    elements.applyFilterBtn.addEventListener('click', applyFilter);
+    elements.clearFilterBtn.addEventListener('click', clearFilter);
+
+    // フィルター折りたたみ（モバイル）
+    if (elements.filterToggle) {
+        elements.filterToggle.addEventListener('click', toggleFilter);
+    }
+
+    // タスク追加
+    elements.addTaskBtn.addEventListener('click', () => openTaskModal());
+
+    // モーダル操作
+    elements.closeModalBtn.addEventListener('click', closeTaskModal);
+    elements.cancelBtn.addEventListener('click', closeTaskModal);
+    elements.taskForm.addEventListener('submit', handleTaskSubmit);
+    elements.taskProgress.addEventListener('input', updateProgressValue);
+
+    // 削除モーダル
+    elements.closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+    elements.cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    elements.confirmDeleteBtn.addEventListener('click', confirmDelete);
+
+    // カレンダー
+    elements.prevMonthBtn.addEventListener('click', () => navigateMonth(-1));
+    elements.nextMonthBtn.addEventListener('click', () => navigateMonth(1));
+
+    // モーダル外クリックで閉じる
+    elements.taskModal.addEventListener('click', (e) => {
+        if (e.target === elements.taskModal) closeTaskModal();
+    });
+    elements.deleteModal.addEventListener('click', (e) => {
+        if (e.target === elements.deleteModal) closeDeleteModal();
+    });
+}
+
+// ========================================
+// モバイル機能の初期化
+// ========================================
+function initMobileFeatures() {
+    // モバイルの場合、フィルターを初期状態で折りたたむ
+    if (window.innerWidth <= 768 && elements.filterSection) {
+        elements.filterSection.classList.add('collapsed');
+    }
+
+    // 画面サイズ変更時の対応
+    window.addEventListener('resize', handleResize);
+}
+
+function handleResize() {
+    const currentTasks = getCurrentFilteredTasks();
+    renderTaskTable(currentTasks);
+    renderTaskCards(currentTasks);
+}
+
+function getCurrentFilteredTasks() {
+    const deadlineFrom = elements.filterDeadlineFrom.value;
+    const deadlineTo = elements.filterDeadlineTo.value;
+    const priority = elements.filterPriority.value;
+    const inProgress = elements.filterInProgress.value;
+
+    if (!deadlineFrom && !deadlineTo && !priority && !inProgress) {
+        return tasks;
+    }
+
+    return filterTasks(deadlineFrom, deadlineTo, priority, inProgress);
+}
+
+function toggleFilter() {
+    if (elements.filterSection) {
+        elements.filterSection.classList.toggle('collapsed');
+    }
+}
+
+// ========================================
+// 表示更新
+// ========================================
+function renderAll() {
+    renderTaskTable();
+    renderTaskCards();
+    renderCalendar();
+}
+
+// ========================================
+// ビュー切り替え
+// ========================================
+function switchView(view) {
+    if (view === 'list') {
+        elements.listView.style.display = 'block';
+        elements.calendarView.style.display = 'none';
+        elements.showListBtn.classList.add('active');
+        elements.showCalendarBtn.classList.remove('active');
+    } else {
+        elements.listView.style.display = 'none';
+        elements.calendarView.style.display = 'block';
+        elements.showListBtn.classList.remove('active');
+        elements.showCalendarBtn.classList.add('active');
+        renderCalendar();
+    }
+}
+
+// ========================================
+// タスク一覧の表示（PC用テーブル）
+// ========================================
+function renderTaskTable(filteredTasks = null) {
+    const displayTasks = filteredTasks || tasks;
+    elements.taskTableBody.innerHTML = '';
+
+    if (displayTasks.length === 0) {
+        elements.noTaskMessage.style.display = 'block';
+        return;
+    }
+
+    elements.noTaskMessage.style.display = 'none';
+
+    displayTasks.forEach(task => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${escapeHtml(task.name)}</td>
+            <td><span class="priority-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span></td>
+            <td class="${getDeadlineClass(task.deadline)}">${formatDate(task.deadline)}</td>
+            <td>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: ${task.progress}%"></div>
+                </div>
+                <div class="progress-text">${task.progress}%</div>
+            </td>
+            <td class="memo-cell" title="${escapeHtml(task.memo || '')}">${escapeHtml(task.memo || '-')}</td>
+            <td><span class="status-badge ${task.inProgress ? 'status-active' : 'status-inactive'}">${task.inProgress ? '着手中' : '未着手'}</span></td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-sm" onclick="openTaskModal('${task.id}')">編集</button>
+                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${task.id}')">削除</button>
+                </div>
+            </td>
+        `;
+        elements.taskTableBody.appendChild(row);
+    });
+}
+
+// ========================================
+// タスクカードの表示（モバイル用）
+// ========================================
+function renderTaskCards(filteredTasks = null) {
+    const displayTasks = filteredTasks || tasks;
+    
+    if (!elements.taskCardsContainer) return;
+    
+    elements.taskCardsContainer.innerHTML = '';
+
+    if (displayTasks.length === 0) {
+        if (elements.noTaskMessageMobile) {
+            elements.noTaskMessageMobile.style.display = 'block';
+        }
+        return;
+    }
+
+    if (elements.noTaskMessageMobile) {
+        elements.noTaskMessageMobile.style.display = 'none';
+    }
+
+    displayTasks.forEach(task => {
+        const card = document.createElement('div');
+        card.className = `task-card priority-${task.priority}-border`;
+        
+        const memoHtml = task.memo 
+            ? `<div class="task-card-memo">${escapeHtml(task.memo)}</div>` 
+            : '';
+
+        card.innerHTML = `
+            <div class="task-card-header">
+                <div class="task-card-title">${escapeHtml(task.name)}</div>
+                <div class="task-card-badges">
+                    <span class="priority-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
+                    <span class="status-badge ${task.inProgress ? 'status-active' : 'status-inactive'}">${task.inProgress ? '着手中' : '未着手'}</span>
+                </div>
+            </div>
+            <div class="task-card-info">
+                <div class="task-card-info-item">
+                    <span class="task-card-info-label">期限</span>
+                    <span class="task-card-info-value ${getDeadlineClass(task.deadline)}">${formatDate(task.deadline)}</span>
+                </div>
+                <div class="task-card-info-item">
+                    <span class="task-card-info-label">進捗</span>
+                    <span class="task-card-info-value">${task.progress}%</span>
+                </div>
+            </div>
+            <div class="task-card-progress">
+                <div class="task-card-progress-bar">
+                    <div class="task-card-progress-fill" style="width: ${task.progress}%"></div>
+                </div>
+            </div>
+            ${memoHtml}
+            <div class="task-card-actions">
+                <button class="btn btn-primary" onclick="openTaskModal('${task.id}')">編集</button>
+                <button class="btn btn-danger" onclick="openDeleteModal('${task.id}')">削除</button>
+            </div>
+        `;
+        elements.taskCardsContainer.appendChild(card);
+    });
+}
+
+// ========================================
+// フィルター機能
+// ========================================
+function filterTasks(deadlineFrom, deadlineTo, priority, inProgress) {
+    let filtered = [...tasks];
+
+    if (deadlineFrom) {
+        filtered = filtered.filter(task => {
+            if (!task.deadline) return false;
+            return task.deadline >= deadlineFrom;
+        });
+    }
+
+    if (deadlineTo) {
+        filtered = filtered.filter(task => {
+            if (!task.deadline) return false;
+            return task.deadline <= deadlineTo;
+        });
+    }
+
+    if (priority) {
+        filtered = filtered.filter(task => task.priority === priority);
+    }
+
+    if (inProgress !== '') {
+        const inProgressBool = inProgress === 'true';
+        filtered = filtered.filter(task => task.inProgress === inProgressBool);
+    }
+
+    return filtered;
+}
+
+function applyFilter() {
+    const deadlineFrom = elements.filterDeadlineFrom.value;
+    const deadlineTo = elements.filterDeadlineTo.value;
+    const priority = elements.filterPriority.value;
+    const inProgress = elements.filterInProgress.value;
+
+    const filtered = filterTasks(deadlineFrom, deadlineTo, priority, inProgress);
+
+    renderTaskTable(filtered);
+    renderTaskCards(filtered);
+}
+
+function clearFilter() {
+    elements.filterDeadlineFrom.value = '';
+    elements.filterDeadlineTo.value = '';
+    elements.filterPriority.value = '';
+    elements.filterInProgress.value = '';
+    renderTaskTable();
+    renderTaskCards();
+}
+
+// ========================================
+// タスクモーダル操作
+// ========================================
+function openTaskModal(taskId = null) {
+    if (taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) {
+            elements.modalTitle.textContent = 'タスク編集';
+            elements.taskId.value = task.id;
+            elements.taskName.value = task.name;
+            elements.taskPriority.value = task.priority;
+            elements.taskDeadline.value = task.deadline || '';
+            elements.taskProgress.value = task.progress;
+            elements.progressValue.textContent = task.progress;
+            elements.taskMemo.value = task.memo || '';
+            elements.taskInProgress.checked = task.inProgress;
+        }
+    } else {
+        elements.modalTitle.textContent = '新規タスク追加';
+        elements.taskForm.reset();
+        elements.taskId.value = '';
+        elements.taskProgress.value = 0;
+        elements.progressValue.textContent = '0';
+    }
+    elements.taskModal.style.display = 'flex';
+}
+
+function closeTaskModal() {
+    elements.taskModal.style.display = 'none';
+    elements.taskForm.reset();
+}
+
+function updateProgressValue() {
+    elements.progressValue.textContent = elements.taskProgress.value;
+}
+
+async function handleTaskSubmit(e) {
+    e.preventDefault();
+
+    const taskData = {
+        id: elements.taskId.value || generateId(),
+        name: elements.taskName.value.trim(),
+        priority: elements.taskPriority.value,
+        deadline: elements.taskDeadline.value || null,
+        progress: parseInt(elements.taskProgress.value),
+        memo: elements.taskMemo.value.trim(),
+        inProgress: elements.taskInProgress.checked
+    };
+
+    if (isFirebaseMode && currentUser) {
+        // Firestoreに保存
+        await saveTaskToFirestore(taskData);
+    } else {
+        // LocalStorageに保存
+        if (elements.taskId.value) {
+            const index = tasks.findIndex(t => t.id === taskData.id);
+            if (index !== -1) {
+                tasks[index] = taskData;
+            }
+        } else {
+            tasks.push(taskData);
+        }
+        saveTasksToLocalStorage();
+        renderAll();
+    }
+
+    closeTaskModal();
+}
+
+// ========================================
+// 削除モーダル操作
+// ========================================
+function openDeleteModal(taskId) {
+    deleteTargetId = taskId;
+    elements.deleteModal.style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    elements.deleteModal.style.display = 'none';
+    deleteTargetId = null;
+}
+
+async function confirmDelete() {
+    if (deleteTargetId) {
+        if (isFirebaseMode && currentUser) {
+            // Firestoreから削除
+            await deleteTaskFromFirestore(deleteTargetId);
+        } else {
+            // LocalStorageから削除
+            tasks = tasks.filter(t => t.id !== deleteTargetId);
+            saveTasksToLocalStorage();
+            renderAll();
+        }
+    }
+    closeDeleteModal();
+}
+
+// ========================================
+// カレンダー機能
+// ========================================
+function renderCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+
+    elements.currentMonthYear.textContent = `${year}年 ${month + 1}月`;
+
+    const firstDay = new Date(year, month, 1);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    elements.calendarDays.innerHTML = '';
+
+    for (let i = 0; i < 42; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+
+        if (currentDate.getMonth() !== month) {
+            dayDiv.classList.add('other-month');
+        }
+
+        if (currentDate.getTime() === today.getTime()) {
+            dayDiv.classList.add('today');
+        }
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'calendar-day-number';
+        dayNumber.textContent = currentDate.getDate();
+        dayDiv.appendChild(dayNumber);
+
+        const dateStr = formatDateForCompare(currentDate);
+        const dayTasks = tasks.filter(task => task.deadline === dateStr);
+
+        const maxDisplay = 3;
+        dayTasks.slice(0, maxDisplay).forEach(task => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = `calendar-task priority-${task.priority}-bg`;
+            taskDiv.textContent = task.name;
+            taskDiv.title = `${task.name}\n重要度: ${getPriorityLabel(task.priority)}\n進捗: ${task.progress}%`;
+            taskDiv.onclick = () => openTaskModal(task.id);
+            dayDiv.appendChild(taskDiv);
+        });
+
+        if (dayTasks.length > maxDisplay) {
+            const moreDiv = document.createElement('div');
+            moreDiv.className = 'calendar-task-more';
+            moreDiv.textContent = `他${dayTasks.length - maxDisplay}件`;
+            dayDiv.appendChild(moreDiv);
+        }
+
+        elements.calendarDays.appendChild(dayDiv);
+    }
+}
+
+function navigateMonth(delta) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    renderCalendar();
+}
+
+// ========================================
+// ユーティリティ関数
+// ========================================
+function generateId() {
+    return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getPriorityLabel(priority) {
+    const labels = {
+        high: '高',
+        medium: '中',
+        low: '低'
+    };
+    return labels[priority] || priority;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+}
+
+function formatDateForCompare(date) {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getDeadlineClass(dateStr) {
+    if (!dateStr) return '';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadline = new Date(dateStr);
+    deadline.setHours(0, 0, 0, 0);
+    
+    const diffDays = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'deadline-overdue';
+    if (diffDays === 0) return 'deadline-today';
+    if (diffDays <= 3) return 'deadline-soon';
+    return '';
+}
+
+// グローバル関数として公開（HTMLのonclick用）
+window.openTaskModal = openTaskModal;
+window.openDeleteModal = openDeleteModal;
