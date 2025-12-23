@@ -63,6 +63,14 @@
                 </div>
                 <div class="filter-controls" id="filterControls">
                     <div class="filter-group">
+                        <label for="filterCategory">カテゴリ</label>
+                        <select id="filterCategory">
+                            <option value="">すべて</option>
+                            <option value="work">仕事</option>
+                            <option value="private">プライベート</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
                         <label for="filterDeadlineFrom">期限（開始）</label>
                         <input type="date" id="filterDeadlineFrom">
                     </div>
@@ -87,6 +95,16 @@
                             <option value="false">未着手のみ</option>
                         </select>
                     </div>
+                    <div class="filter-group">
+                        <label for="sortOrder">ソート</label>
+                        <select id="sortOrder">
+                            <option value="">なし</option>
+                            <option value="deadline-asc">期限日（早い順）</option>
+                            <option value="deadline-desc">期限日（遅い順）</option>
+                            <option value="priority-high">重要度（高い順）</option>
+                            <option value="priority-low">重要度（低い順）</option>
+                        </select>
+                    </div>
                     <div class="filter-buttons">
                         <button id="applyFilterBtn" class="btn btn-primary">検索</button>
                         <button id="clearFilterBtn" class="btn btn-secondary">クリア</button>
@@ -99,33 +117,12 @@
                 <button id="addTaskBtn" class="btn btn-success">＋ 新規タスク追加</button>
             </div>
 
-            <!-- タスク一覧テーブル（PC用） -->
-            <div class="task-table-container desktop-only">
-                <table class="task-table">
-                    <thead>
-                        <tr>
-                            <th>タスク名</th>
-                            <th>重要度</th>
-                            <th>期限</th>
-                            <th>進捗</th>
-                            <th>詳細メモ</th>
-                            <th>着手中</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="taskTableBody">
-                        <!-- タスクがここに動的に追加される -->
-                    </tbody>
-                </table>
-                <p id="noTaskMessage" class="no-task-message" style="display: none;">タスクがありません。新規タスクを追加してください。</p>
-            </div>
-
-            <!-- タスク一覧カード（モバイル用） -->
-            <div class="task-cards-container mobile-only">
+            <!-- タスク一覧カード -->
+            <div class="task-cards-container">
                 <div id="taskCardsContainer">
                     <!-- タスクカードがここに動的に追加される -->
                 </div>
-                <p id="noTaskMessageMobile" class="no-task-message" style="display: none;">タスクがありません。新規タスクを追加してください。</p>
+                <p id="noTaskMessage" class="no-task-message" style="display: none;">タスクがありません。新規タスクを追加してください。</p>
             </div>
         </section>
 
@@ -160,6 +157,13 @@
             </div>
             <form id="taskForm">
                 <input type="hidden" id="taskId">
+                <div class="form-group">
+                    <label for="taskCategory">カテゴリ <span class="required">*</span></label>
+                    <select id="taskCategory" required>
+                        <option value="work">仕事</option>
+                        <option value="private">プライベート</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label for="taskName">タスク名 <span class="required">*</span></label>
                     <input type="text" id="taskName" required placeholder="タスク名を入力">

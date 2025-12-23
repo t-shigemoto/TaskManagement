@@ -33,21 +33,19 @@ const elements = {
     filterSection: document.querySelector('.filter-section'),
     filterToggle: document.getElementById('filterToggle'),
     filterControls: document.getElementById('filterControls'),
+    filterCategory: document.getElementById('filterCategory'),
     filterDeadlineFrom: document.getElementById('filterDeadlineFrom'),
     filterDeadlineTo: document.getElementById('filterDeadlineTo'),
     filterPriority: document.getElementById('filterPriority'),
     filterInProgress: document.getElementById('filterInProgress'),
+    sortOrder: document.getElementById('sortOrder'),
     applyFilterBtn: document.getElementById('applyFilterBtn'),
     clearFilterBtn: document.getElementById('clearFilterBtn'),
 
-    // タスク一覧（PC）
+    // タスク一覧
     addTaskBtn: document.getElementById('addTaskBtn'),
-    taskTableBody: document.getElementById('taskTableBody'),
-    noTaskMessage: document.getElementById('noTaskMessage'),
-
-    // タスク一覧（モバイル）
     taskCardsContainer: document.getElementById('taskCardsContainer'),
-    noTaskMessageMobile: document.getElementById('noTaskMessageMobile'),
+    noTaskMessage: document.getElementById('noTaskMessage'),
 
     // タスクモーダル
     taskModal: document.getElementById('taskModal'),
@@ -55,6 +53,7 @@ const elements = {
     closeModalBtn: document.getElementById('closeModalBtn'),
     taskForm: document.getElementById('taskForm'),
     taskId: document.getElementById('taskId'),
+    taskCategory: document.getElementById('taskCategory'),
     taskName: document.getElementById('taskName'),
     taskPriority: document.getElementById('taskPriority'),
     taskDeadline: document.getElementById('taskDeadline'),
@@ -343,21 +342,22 @@ function initMobileFeatures() {
 
 function handleResize() {
     const currentTasks = getCurrentFilteredTasks();
-    renderTaskTable(currentTasks);
     renderTaskCards(currentTasks);
 }
 
 function getCurrentFilteredTasks() {
+    const category = elements.filterCategory.value;
     const deadlineFrom = elements.filterDeadlineFrom.value;
     const deadlineTo = elements.filterDeadlineTo.value;
     const priority = elements.filterPriority.value;
     const inProgress = elements.filterInProgress.value;
+    const sortOrder = elements.sortOrder.value;
 
-    if (!deadlineFrom && !deadlineTo && !priority && !inProgress) {
+    if (!category && !deadlineFrom && !deadlineTo && !priority && !inProgress && !sortOrder) {
         return tasks;
     }
 
-    return filterTasks(deadlineFrom, deadlineTo, priority, inProgress);
+    return filterAndSortTasks(category, deadlineFrom, deadlineTo, priority, inProgress, sortOrder);
 }
 
 function toggleFilter() {
@@ -370,7 +370,6 @@ function toggleFilter() {
 // 表示更新
 // ========================================
 function renderAll() {
-    renderTaskTable();
     renderTaskCards();
     renderCalendar();
 }
@@ -394,46 +393,7 @@ function switchView(view) {
 }
 
 // ========================================
-// タスク一覧の表示（PC用テーブル）
-// ========================================
-function renderTaskTable(filteredTasks = null) {
-    const displayTasks = filteredTasks || tasks;
-    elements.taskTableBody.innerHTML = '';
-
-    if (displayTasks.length === 0) {
-        elements.noTaskMessage.style.display = 'block';
-        return;
-    }
-
-    elements.noTaskMessage.style.display = 'none';
-
-    displayTasks.forEach(task => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${escapeHtml(task.name)}</td>
-            <td><span class="priority-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span></td>
-            <td class="${getDeadlineClass(task.deadline)}">${formatDate(task.deadline)}</td>
-            <td>
-                <div class="progress-container">
-                    <div class="progress-bar" style="width: ${task.progress}%"></div>
-                </div>
-                <div class="progress-text">${task.progress}%</div>
-            </td>
-            <td class="memo-cell" title="${escapeHtml(task.memo || '')}">${escapeHtml(task.memo || '-')}</td>
-            <td><span class="status-badge ${task.inProgress ? 'status-active' : 'status-inactive'}">${task.inProgress ? '着手中' : '未着手'}</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn btn-primary btn-sm" onclick="openTaskModal('${task.id}')">編集</button>
-                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${task.id}')">削除</button>
-                </div>
-            </td>
-        `;
-        elements.taskTableBody.appendChild(row);
-    });
-}
-
-// ========================================
-// タスクカードの表示（モバイル用）
+// タスクカードの表示
 // ========================================
 function renderTaskCards(filteredTasks = null) {
     const displayTasks = filteredTasks || tasks;
@@ -443,28 +403,32 @@ function renderTaskCards(filteredTasks = null) {
     elements.taskCardsContainer.innerHTML = '';
 
     if (displayTasks.length === 0) {
-        if (elements.noTaskMessageMobile) {
-            elements.noTaskMessageMobile.style.display = 'block';
+        if (elements.noTaskMessage) {
+            elements.noTaskMessage.style.display = 'block';
         }
         return;
     }
 
-    if (elements.noTaskMessageMobile) {
-        elements.noTaskMessageMobile.style.display = 'none';
+    if (elements.noTaskMessage) {
+        elements.noTaskMessage.style.display = 'none';
     }
 
     displayTasks.forEach(task => {
         const card = document.createElement('div');
         card.className = `task-card priority-${task.priority}-border`;
         
+        const categoryLabel = task.category === 'private' ? 'プライベート' : '仕事';
+        const categoryClass = task.category === 'private' ? 'category-private' : 'category-work';
+        
         const memoHtml = task.memo 
-            ? `<div class="task-card-memo">${escapeHtml(task.memo)}</div>` 
+            ? `<div class="task-card-memo" onclick="toggleMemo(this)">${escapeHtml(task.memo)}</div>` 
             : '';
 
         card.innerHTML = `
             <div class="task-card-header">
                 <div class="task-card-title">${escapeHtml(task.name)}</div>
                 <div class="task-card-badges">
+                    <span class="category-badge ${categoryClass}">${categoryLabel}</span>
                     <span class="priority-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
                     <span class="status-badge ${task.inProgress ? 'status-active' : 'status-inactive'}">${task.inProgress ? '着手中' : '未着手'}</span>
                 </div>
@@ -494,11 +458,20 @@ function renderTaskCards(filteredTasks = null) {
     });
 }
 
+// メモの展開/折りたたみ
+function toggleMemo(element) {
+    element.classList.toggle('expanded');
+}
+
 // ========================================
 // フィルター機能
 // ========================================
-function filterTasks(deadlineFrom, deadlineTo, priority, inProgress) {
+function filterAndSortTasks(category, deadlineFrom, deadlineTo, priority, inProgress, sortOrder) {
     let filtered = [...tasks];
+
+    if (category) {
+        filtered = filtered.filter(task => task.category === category);
+    }
 
     if (deadlineFrom) {
         filtered = filtered.filter(task => {
@@ -523,27 +496,61 @@ function filterTasks(deadlineFrom, deadlineTo, priority, inProgress) {
         filtered = filtered.filter(task => task.inProgress === inProgressBool);
     }
 
+    // ソート処理
+    if (sortOrder) {
+        filtered = sortTasks(filtered, sortOrder);
+    }
+
     return filtered;
 }
 
+function sortTasks(taskList, sortOrder) {
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    
+    return taskList.sort((a, b) => {
+        switch (sortOrder) {
+            case 'deadline-asc':
+                if (!a.deadline) return 1;
+                if (!b.deadline) return -1;
+                return a.deadline.localeCompare(b.deadline);
+            case 'deadline-desc':
+                if (!a.deadline) return 1;
+                if (!b.deadline) return -1;
+                return b.deadline.localeCompare(a.deadline);
+            case 'priority-high':
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            case 'priority-low':
+                return priorityOrder[b.priority] - priorityOrder[a.priority];
+            default:
+                return 0;
+        }
+    });
+}
+
+function filterTasks(deadlineFrom, deadlineTo, priority, inProgress) {
+    return filterAndSortTasks('', deadlineFrom, deadlineTo, priority, inProgress, '');
+}
+
 function applyFilter() {
+    const category = elements.filterCategory.value;
     const deadlineFrom = elements.filterDeadlineFrom.value;
     const deadlineTo = elements.filterDeadlineTo.value;
     const priority = elements.filterPriority.value;
     const inProgress = elements.filterInProgress.value;
+    const sortOrder = elements.sortOrder.value;
 
-    const filtered = filterTasks(deadlineFrom, deadlineTo, priority, inProgress);
+    const filtered = filterAndSortTasks(category, deadlineFrom, deadlineTo, priority, inProgress, sortOrder);
 
-    renderTaskTable(filtered);
     renderTaskCards(filtered);
 }
 
 function clearFilter() {
+    elements.filterCategory.value = '';
     elements.filterDeadlineFrom.value = '';
     elements.filterDeadlineTo.value = '';
     elements.filterPriority.value = '';
     elements.filterInProgress.value = '';
-    renderTaskTable();
+    elements.sortOrder.value = '';
     renderTaskCards();
 }
 
@@ -556,6 +563,7 @@ function openTaskModal(taskId = null) {
         if (task) {
             elements.modalTitle.textContent = 'タスク編集';
             elements.taskId.value = task.id;
+            elements.taskCategory.value = task.category || 'work';
             elements.taskName.value = task.name;
             elements.taskPriority.value = task.priority;
             elements.taskDeadline.value = task.deadline || '';
@@ -568,6 +576,7 @@ function openTaskModal(taskId = null) {
         elements.modalTitle.textContent = '新規タスク追加';
         elements.taskForm.reset();
         elements.taskId.value = '';
+        elements.taskCategory.value = 'work';
         elements.taskProgress.value = 0;
         elements.progressValue.textContent = '0';
     }
@@ -588,6 +597,7 @@ async function handleTaskSubmit(e) {
 
     const taskData = {
         id: elements.taskId.value || generateId(),
+        category: elements.taskCategory.value,
         name: elements.taskName.value.trim(),
         priority: elements.taskPriority.value,
         deadline: elements.taskDeadline.value || null,
@@ -765,3 +775,13 @@ function getDeadlineClass(dateStr) {
 // グローバル関数として公開（HTMLのonclick用）
 window.openTaskModal = openTaskModal;
 window.openDeleteModal = openDeleteModal;
+window.toggleMemo = toggleMemo;
+
+// カテゴリラベル取得
+function getCategoryLabel(category) {
+    const labels = {
+        work: '仕事',
+        private: 'プライベート'
+    };
+    return labels[category] || category;
+}
