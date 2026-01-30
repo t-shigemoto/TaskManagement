@@ -455,7 +455,8 @@ function renderTaskCards(filteredTasks = null) {
 
     displayTasks.forEach(task => {
         const card = document.createElement('div');
-        card.className = `task-card priority-${task.priority}-border`;
+        const categoryCardClass = task.category === 'private' ? 'category-private-card' : 'category-work-card';
+        card.className = `task-card ${categoryCardClass}`;
         
         const categoryLabel = task.category === 'private' ? 'プライベート' : '仕事';
         const categoryClass = task.category === 'private' ? 'category-private' : 'category-work';
@@ -759,7 +760,8 @@ function renderCompletedTasks() {
 
     completedTasks.forEach(task => {
         const card = document.createElement('div');
-        card.className = `task-card completed-task priority-${task.priority}-border`;
+        const categoryCardClass = task.category === 'private' ? 'category-private-card' : 'category-work-card';
+        card.className = `task-card completed-task ${categoryCardClass}`;
         
         const categoryLabel = task.category === 'private' ? 'プライベート' : '仕事';
         const categoryClass = task.category === 'private' ? 'category-private' : 'category-work';
@@ -838,14 +840,16 @@ function renderCalendar() {
         dayDiv.appendChild(dayNumber);
 
         const dateStr = formatDateForCompare(currentDate);
-        const dayTasks = tasks.filter(task => task.deadline === dateStr);
+        // 完了済みタスクを除外
+        const dayTasks = tasks.filter(task => task.deadline === dateStr && !task.completed);
 
         const maxDisplay = 3;
         dayTasks.slice(0, maxDisplay).forEach(task => {
             const taskDiv = document.createElement('div');
-            taskDiv.className = `calendar-task priority-${task.priority}-bg`;
+            const calendarCategoryClass = task.category === 'private' ? 'calendar-task-private' : 'calendar-task-work';
+            taskDiv.className = `calendar-task ${calendarCategoryClass}`;
             taskDiv.textContent = task.name;
-            taskDiv.title = `${task.name}\n重要度: ${getPriorityLabel(task.priority)}\n進捗: ${task.progress}%`;
+            taskDiv.title = `${task.name}\nカテゴリ: ${task.category === 'private' ? 'プライベート' : '仕事'}\n重要度: ${getPriorityLabel(task.priority)}\n進捗: ${task.progress}%`;
             taskDiv.onclick = () => openTaskModal(task.id);
             dayDiv.appendChild(taskDiv);
         });

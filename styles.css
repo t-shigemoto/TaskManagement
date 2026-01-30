@@ -1313,6 +1313,40 @@ nav {
 }
 
 /* ========================================
+   カテゴリ別カード色分け
+======================================== */
+.task-card.category-work-card {
+    border-left: 4px solid #6b46c1;
+    background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+}
+
+.task-card.category-private-card {
+    border-left: 4px solid #d97706;
+    background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+}
+
+.task-card.completed-task.category-work-card {
+    background: linear-gradient(135deg, #f5f3ff 0%, #f8fafc 100%);
+    opacity: 0.85;
+}
+
+.task-card.completed-task.category-private-card {
+    background: linear-gradient(135deg, #fefce8 0%, #f8fafc 100%);
+    opacity: 0.85;
+}
+
+/* ========================================
+   カレンダータスクのカテゴリ別色分け
+======================================== */
+.calendar-task.calendar-task-work {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6b46c1 100%);
+}
+
+.calendar-task.calendar-task-private {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+/* ========================================
    メモのツールチップ（ホバー/タップ対応）
 ======================================== */
 .task-card-memo {
