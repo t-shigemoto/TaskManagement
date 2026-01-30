@@ -51,6 +51,7 @@ header h1 {
 nav {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 /* ========================================
@@ -1376,4 +1377,133 @@ nav {
 /* desktop-only, mobile-only クラスの上書き */
 .task-cards-container.mobile-only {
     display: block;
+}
+
+/* ========================================
+   完了タスク一覧スタイル
+======================================== */
+.completed-header {
+    margin-bottom: 20px;
+}
+
+.completed-header h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+}
+
+.completed-task {
+    opacity: 0.85;
+    background: #f8fafc;
+}
+
+.status-completed {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+/* ========================================
+   ナビゲーションボタンのスマートフォン最適化
+======================================== */
+@media (max-width: 768px) {
+    nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .nav-btn {
+        flex: 1 1 auto;
+        min-width: calc(50% - 4px);
+        padding: 10px 8px;
+        font-size: 0.8rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* 3つ目のボタン（完了タスク）は全幅 */
+    .nav-btn:nth-child(3) {
+        min-width: 100%;
+    }
+
+    .completed-header {
+        margin-bottom: 16px;
+    }
+
+    .completed-header h2 {
+        font-size: 1.2rem;
+    }
+}
+
+/* ========================================
+   タスクカードのアクションボタン修正（スマートフォン）
+======================================== */
+@media (max-width: 768px) {
+    .task-card-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .task-card-actions .btn {
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+        padding: 10px 8px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 390px) {
+    .task-card-actions .btn {
+        flex: 1 1 100%;
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    .nav-btn {
+        font-size: 0.75rem;
+        padding: 10px 6px;
+    }
+}
+
+/* ========================================
+   タスクカードバッジのスマートフォン最適化
+======================================== */
+@media (max-width: 768px) {
+    .task-card-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .task-card-badges {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .category-badge,
+    .priority-badge,
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+}
+
+@media (max-width: 390px) {
+    .task-card-title {
+        font-size: 0.95rem;
+    }
+
+    .category-badge,
+    .priority-badge,
+    .status-badge {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+
+    .task-card-info-label {
+        font-size: 0.7rem;
+    }
+
+    .task-card-info-value {
+        font-size: 0.85rem;
+    }
 }

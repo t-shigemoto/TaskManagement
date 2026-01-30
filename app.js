@@ -73,7 +73,14 @@ const elements = {
     prevMonthBtn: document.getElementById('prevMonthBtn'),
     nextMonthBtn: document.getElementById('nextMonthBtn'),
     currentMonthYear: document.getElementById('currentMonthYear'),
-    calendarDays: document.getElementById('calendarDays')
+    calendarDays: document.getElementById('calendarDays'),
+
+    // 完了タスク一覧
+    showCompletedBtn: document.getElementById('showCompletedBtn'),
+    completedView: document.getElementById('completedView'),
+    completedTasksContainer: document.getElementById('completedTasksContainer'),
+    noCompletedTaskMessage: document.getElementById('noCompletedTaskMessage'),
+    backToListBtn: document.getElementById('backToListBtn')
 };
 
 // ========================================
@@ -290,6 +297,12 @@ function setupEventListeners() {
     // ナビゲーション
     elements.showListBtn.addEventListener('click', () => switchView('list'));
     elements.showCalendarBtn.addEventListener('click', () => switchView('calendar'));
+    if (elements.showCompletedBtn) {
+        elements.showCompletedBtn.addEventListener('click', () => switchView('completed'));
+    }
+    if (elements.backToListBtn) {
+        elements.backToListBtn.addEventListener('click', () => switchView('list'));
+    }
 
     // フィルター
     elements.applyFilterBtn.addEventListener('click', applyFilter);
@@ -372,23 +385,42 @@ function toggleFilter() {
 function renderAll() {
     renderTaskCards();
     renderCalendar();
+    renderCompletedTasks();
 }
 
 // ========================================
 // ビュー切り替え
 // ========================================
 function switchView(view) {
+    // すべてのビューを非表示
+    elements.listView.style.display = 'none';
+    elements.calendarView.style.display = 'none';
+    if (elements.completedView) {
+        elements.completedView.style.display = 'none';
+    }
+
+    // ナビゲーションボタンの状態をリセット
+    elements.showListBtn.classList.remove('active');
+    elements.showCalendarBtn.classList.remove('active');
+    if (elements.showCompletedBtn) {
+        elements.showCompletedBtn.classList.remove('active');
+    }
+
     if (view === 'list') {
         elements.listView.style.display = 'block';
-        elements.calendarView.style.display = 'none';
         elements.showListBtn.classList.add('active');
-        elements.showCalendarBtn.classList.remove('active');
-    } else {
-        elements.listView.style.display = 'none';
+    } else if (view === 'calendar') {
         elements.calendarView.style.display = 'block';
-        elements.showListBtn.classList.remove('active');
         elements.showCalendarBtn.classList.add('active');
         renderCalendar();
+    } else if (view === 'completed') {
+        if (elements.completedView) {
+            elements.completedView.style.display = 'block';
+        }
+        if (elements.showCompletedBtn) {
+            elements.showCompletedBtn.classList.add('active');
+        }
+        renderCompletedTasks();
     }
 }
 
@@ -396,7 +428,15 @@ function switchView(view) {
 // タスクカードの表示
 // ========================================
 function renderTaskCards(filteredTasks = null) {
-    const displayTasks = filteredTasks || tasks;
+    let displayTasks = filteredTasks || tasks;
+    
+    // 未完了タスクのみ表示（完了タスクは除外）
+    displayTasks = displayTasks.filter(task => !task.completed);
+    
+    // 初期表示時は期限日順でソート（filteredTasksがnullの場合）
+    if (!filteredTasks) {
+        displayTasks = sortTasks([...displayTasks], 'deadline-asc');
+    }
     
     if (!elements.taskCardsContainer) return;
     
@@ -450,6 +490,7 @@ function renderTaskCards(filteredTasks = null) {
             </div>
             ${memoHtml}
             <div class="task-card-actions">
+                <button class="btn btn-success" onclick="completeTask('${task.id}')">完了</button>
                 <button class="btn btn-primary" onclick="openTaskModal('${task.id}')">編集</button>
                 <button class="btn btn-danger" onclick="openDeleteModal('${task.id}')">削除</button>
             </div>
@@ -655,6 +696,110 @@ async function confirmDelete() {
 }
 
 // ========================================
+// タスク完了機能
+// ========================================
+async function completeTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    task.completed = true;
+    task.completedAt = new Date().toISOString();
+    task.progress = 100;
+
+    if (isFirebaseMode && currentUser) {
+        await saveTaskToFirestore(task);
+    } else {
+        saveTasksToLocalStorage();
+        renderAll();
+    }
+}
+
+async function restoreTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    task.completed = false;
+    task.completedAt = null;
+
+    if (isFirebaseMode && currentUser) {
+        await saveTaskToFirestore(task);
+    } else {
+        saveTasksToLocalStorage();
+        renderAll();
+    }
+}
+
+// ========================================
+// 完了タスク一覧の表示
+// ========================================
+function renderCompletedTasks() {
+    const completedTasks = tasks.filter(task => task.completed);
+    
+    if (!elements.completedTasksContainer) return;
+    
+    elements.completedTasksContainer.innerHTML = '';
+
+    if (completedTasks.length === 0) {
+        if (elements.noCompletedTaskMessage) {
+            elements.noCompletedTaskMessage.style.display = 'block';
+        }
+        return;
+    }
+
+    if (elements.noCompletedTaskMessage) {
+        elements.noCompletedTaskMessage.style.display = 'none';
+    }
+
+    // 完了日順（新しい順）でソート
+    completedTasks.sort((a, b) => {
+        if (!a.completedAt) return 1;
+        if (!b.completedAt) return -1;
+        return b.completedAt.localeCompare(a.completedAt);
+    });
+
+    completedTasks.forEach(task => {
+        const card = document.createElement('div');
+        card.className = `task-card completed-task priority-${task.priority}-border`;
+        
+        const categoryLabel = task.category === 'private' ? 'プライベート' : '仕事';
+        const categoryClass = task.category === 'private' ? 'category-private' : 'category-work';
+        const completedDate = task.completedAt ? formatDateTime(task.completedAt) : '-';
+
+        card.innerHTML = `
+            <div class="task-card-header">
+                <div class="task-card-title">${escapeHtml(task.name)}</div>
+                <div class="task-card-badges">
+                    <span class="category-badge ${categoryClass}">${categoryLabel}</span>
+                    <span class="priority-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
+                    <span class="status-badge status-completed">完了</span>
+                </div>
+            </div>
+            <div class="task-card-info">
+                <div class="task-card-info-item">
+                    <span class="task-card-info-label">期限</span>
+                    <span class="task-card-info-value">${formatDate(task.deadline)}</span>
+                </div>
+                <div class="task-card-info-item">
+                    <span class="task-card-info-label">完了日時</span>
+                    <span class="task-card-info-value">${completedDate}</span>
+                </div>
+            </div>
+            <div class="task-card-actions">
+                <button class="btn btn-secondary" onclick="restoreTask('${task.id}')">未完了に戻す</button>
+                <button class="btn btn-danger" onclick="openDeleteModal('${task.id}')">削除</button>
+            </div>
+        `;
+        elements.completedTasksContainer.appendChild(card);
+    });
+}
+
+function formatDateTime(isoString) {
+    if (!isoString) return '-';
+    const date = new Date(isoString);
+    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// ========================================
 // カレンダー機能
 // ========================================
 function renderCalendar() {
@@ -776,6 +921,9 @@ function getDeadlineClass(dateStr) {
 window.openTaskModal = openTaskModal;
 window.openDeleteModal = openDeleteModal;
 window.toggleMemo = toggleMemo;
+window.completeTask = completeTask;
+window.switchView = switchView;
+window.restoreTask = restoreTask;
 
 // カテゴリラベル取得
 function getCategoryLabel(category) {
