@@ -473,7 +473,7 @@ function renderTaskCards(filteredTasks = null) {
         const categoryClass = task.category === 'private' ? 'category-private' : 'category-work';
         
         const memoHtml = task.memo 
-            ? `<div class="task-card-memo" onclick="toggleMemo(this)">${escapeHtml(task.memo)}</div>` 
+            ? `<div class="task-card-memo" onclick="toggleMemo(this)">${linkifyHtml(escapeHtml(task.memo))}</div>` 
             : '';
 
         card.innerHTML = `
@@ -1041,6 +1041,10 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function linkifyHtml(escapedText) {
+    return escapedText.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">$1</a>');
 }
 
 function getPriorityLabel(priority) {
