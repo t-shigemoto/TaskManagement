@@ -630,6 +630,11 @@ function openTaskModal(taskId = null) {
         elements.taskForm.reset();
         elements.taskId.value = '';
         elements.taskCategory.value = 'work';
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = (today.getMonth() + 1).toString().padStart(2, '0');
+        const dd = today.getDate().toString().padStart(2, '0');
+        elements.taskDeadline.value = `${yyyy}-${mm}-${dd}T00:00`;
         elements.taskProgress.value = 0;
         elements.progressValue.textContent = '0';
     }
