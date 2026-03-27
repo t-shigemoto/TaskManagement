@@ -6,6 +6,7 @@
 let tasks = [];
 let deleteTargetId = null;
 let currentCalendarDate = new Date();
+let calendarViewMode = 'month';
 let currentUser = null;
 let db = null;
 let unsubscribeSnapshot = null;
@@ -328,8 +329,18 @@ function setupEventListeners() {
     elements.confirmDeleteBtn.addEventListener('click', confirmDelete);
 
     // カレンダー
-    elements.prevMonthBtn.addEventListener('click', () => navigateMonth(-1));
-    elements.nextMonthBtn.addEventListener('click', () => navigateMonth(1));
+    elements.prevMonthBtn.addEventListener('click', () => navigateCalendar(-1));
+    elements.nextMonthBtn.addEventListener('click', () => navigateCalendar(1));
+
+    // カレンダー表示モード切替
+    document.querySelectorAll('.calendar-view-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            calendarViewMode = btn.dataset.view;
+            document.querySelectorAll('.calendar-view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCalendar();
+        });
+    });
 
     // モーダル外クリックで閉じる
     elements.taskModal.addEventListener('click', (e) => {
@@ -518,14 +529,14 @@ function filterAndSortTasks(category, deadlineFrom, deadlineTo, priority, inProg
     if (deadlineFrom) {
         filtered = filtered.filter(task => {
             if (!task.deadline) return false;
-            return task.deadline >= deadlineFrom;
+            return task.deadline.substring(0, 10) >= deadlineFrom;
         });
     }
 
     if (deadlineTo) {
         filtered = filtered.filter(task => {
             if (!task.deadline) return false;
-            return task.deadline <= deadlineTo;
+            return task.deadline.substring(0, 10) <= deadlineTo;
         });
     }
 
@@ -805,6 +816,25 @@ function formatDateTime(isoString) {
 // カレンダー機能
 // ========================================
 function renderCalendar() {
+    switch (calendarViewMode) {
+        case 'week':
+            renderCalendarWeek();
+            break;
+        case 'day':
+            renderCalendarDay();
+            break;
+        default:
+            renderCalendarMonth();
+            break;
+    }
+}
+
+function renderCalendarMonth() {
+    const calendarGrid = document.querySelector('.calendar-grid');
+    calendarGrid.style.display = 'grid';
+    calendarGrid.classList.remove('calendar-week-mode');
+    document.getElementById('calendarDayView').style.display = 'none';
+
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth();
 
@@ -840,8 +870,10 @@ function renderCalendar() {
         dayDiv.appendChild(dayNumber);
 
         const dateStr = formatDateForCompare(currentDate);
-        // 完了済みタスクを除外
-        const dayTasks = tasks.filter(task => task.deadline === dateStr && !task.completed);
+        const dayTasks = tasks.filter(task => {
+            if (!task.deadline || task.completed) return false;
+            return task.deadline.substring(0, 10) === dateStr;
+        });
 
         const maxDisplay = 3;
         dayTasks.slice(0, maxDisplay).forEach(task => {
@@ -865,8 +897,131 @@ function renderCalendar() {
     }
 }
 
-function navigateMonth(delta) {
-    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+function renderCalendarWeek() {
+    const calendarGrid = document.querySelector('.calendar-grid');
+    calendarGrid.style.display = 'grid';
+    calendarGrid.classList.add('calendar-week-mode');
+    document.getElementById('calendarDayView').style.display = 'none';
+
+    const current = new Date(currentCalendarDate);
+    const dayOfWeek = current.getDay();
+    const startOfWeek = new Date(current);
+    startOfWeek.setDate(current.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const sy = startOfWeek.getFullYear(), sm = startOfWeek.getMonth() + 1, sd = startOfWeek.getDate();
+    const ey = endOfWeek.getFullYear(), em = endOfWeek.getMonth() + 1, ed = endOfWeek.getDate();
+    if (sy === ey && sm === em) {
+        elements.currentMonthYear.textContent = `${sy}年${sm}月${sd}日 - ${ed}日`;
+    } else if (sy === ey) {
+        elements.currentMonthYear.textContent = `${sy}年${sm}月${sd}日 - ${em}月${ed}日`;
+    } else {
+        elements.currentMonthYear.textContent = `${sy}年${sm}月${sd}日 - ${ey}年${em}月${ed}日`;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    elements.calendarDays.innerHTML = '';
+
+    for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startOfWeek);
+        currentDate.setDate(startOfWeek.getDate() + i);
+
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+
+        if (currentDate.getTime() === today.getTime()) {
+            dayDiv.classList.add('today');
+        }
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'calendar-day-number';
+        dayNumber.textContent = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+        dayDiv.appendChild(dayNumber);
+
+        const dateStr = formatDateForCompare(currentDate);
+        const dayTasks = tasks.filter(task => {
+            if (!task.deadline || task.completed) return false;
+            return task.deadline.substring(0, 10) === dateStr;
+        });
+
+        dayTasks.forEach(task => {
+            const taskDiv = document.createElement('div');
+            const calendarCategoryClass = task.category === 'private' ? 'calendar-task-private' : 'calendar-task-work';
+            taskDiv.className = `calendar-task ${calendarCategoryClass}`;
+            taskDiv.textContent = task.name;
+            taskDiv.title = `${task.name}\nカテゴリ: ${task.category === 'private' ? 'プライベート' : '仕事'}\n重要度: ${getPriorityLabel(task.priority)}\n進捗: ${task.progress}%`;
+            taskDiv.onclick = () => openTaskModal(task.id);
+            dayDiv.appendChild(taskDiv);
+        });
+
+        elements.calendarDays.appendChild(dayDiv);
+    }
+}
+
+function renderCalendarDay() {
+    document.querySelector('.calendar-grid').style.display = 'none';
+    const dayView = document.getElementById('calendarDayView');
+    dayView.style.display = 'block';
+
+    const current = new Date(currentCalendarDate);
+    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    elements.currentMonthYear.textContent = `${current.getFullYear()}年${current.getMonth() + 1}月${current.getDate()}日（${dayNames[current.getDay()]}）`;
+
+    const dateStr = formatDateForCompare(current);
+    const dayTasks = tasks.filter(task => {
+        if (!task.deadline || task.completed) return false;
+        return task.deadline.substring(0, 10) === dateStr;
+    });
+
+    dayView.innerHTML = '';
+
+    if (dayTasks.length === 0) {
+        dayView.innerHTML = '<p class="no-task-message">この日のタスクはありません。</p>';
+        return;
+    }
+
+    dayTasks.sort((a, b) => (a.deadline || '').localeCompare(b.deadline || ''));
+
+    dayTasks.forEach(task => {
+        const taskEl = document.createElement('div');
+        const categoryClass = task.category === 'private' ? 'day-task-private' : 'day-task-work';
+        taskEl.className = `calendar-day-task ${categoryClass}`;
+        taskEl.style.cursor = 'pointer';
+        taskEl.onclick = () => openTaskModal(task.id);
+
+        const timeStr = task.deadline && task.deadline.includes('T') ? task.deadline.substring(11, 16) : '';
+        const categoryLabel = task.category === 'private' ? 'プライベート' : '仕事';
+
+        taskEl.innerHTML = `
+            <div class="calendar-day-task-name">${escapeHtml(task.name)}</div>
+            <div class="calendar-day-task-info">
+                ${timeStr ? `<span>🕐 ${timeStr}</span>` : ''}
+                <span>📁 ${categoryLabel}</span>
+                <span>⚡ ${getPriorityLabel(task.priority)}</span>
+                <span>📊 ${task.progress}%</span>
+            </div>
+        `;
+        dayView.appendChild(taskEl);
+    });
+}
+
+function navigateCalendar(delta) {
+    switch (calendarViewMode) {
+        case 'week':
+            currentCalendarDate.setDate(currentCalendarDate.getDate() + delta * 7);
+            break;
+        case 'day':
+            currentCalendarDate.setDate(currentCalendarDate.getDate() + delta);
+            break;
+        default:
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            break;
+    }
     renderCalendar();
 }
 
@@ -895,7 +1050,11 @@ function getPriorityLabel(priority) {
 function formatDate(dateStr) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
-    return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+    let result = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+    if (dateStr.includes('T')) {
+        result += ` ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    }
+    return result;
 }
 
 function formatDateForCompare(date) {

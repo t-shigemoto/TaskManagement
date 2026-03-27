@@ -574,6 +574,7 @@ nav {
 
 .form-group input[type="text"],
 .form-group input[type="date"],
+.form-group input[type="datetime-local"],
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -674,6 +675,8 @@ nav {
     padding: 8px;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .calendar-day.other-month {
@@ -742,6 +745,85 @@ nav {
     color: #718096;
     text-align: center;
     padding: 4px;
+}
+
+/* ========================================
+   カレンダー表示モード切替
+======================================== */
+.calendar-view-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.calendar-view-btn {
+    padding: 8px 20px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4a5568;
+    transition: all 0.3s ease;
+}
+
+.calendar-view-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.calendar-view-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+/* 週表示モード */
+.calendar-grid.calendar-week-mode .calendar-day {
+    min-height: 200px;
+}
+
+/* 日表示（日詳細ビュー） */
+.calendar-day-detail {
+    padding: 16px 0;
+}
+
+.calendar-day-task {
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+    background: #f7fafc;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.calendar-day-task:hover {
+    background: #edf2f7;
+}
+
+.calendar-day-task.day-task-private {
+    border-left-color: #d97706;
+}
+
+.calendar-day-task.day-task-work {
+    border-left-color: #6b46c1;
+}
+
+.calendar-day-task-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 6px;
+}
+
+.calendar-day-task-info {
+    display: flex;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #718096;
+    flex-wrap: wrap;
 }
 
 /* ========================================
@@ -981,6 +1063,23 @@ nav {
         font-size: 0.65rem;
     }
 
+    .calendar-view-toggle {
+        gap: 4px;
+    }
+
+    .calendar-view-btn {
+        padding: 8px 14px;
+        font-size: 0.85rem;
+    }
+
+    .calendar-grid.calendar-week-mode .calendar-day {
+        min-height: 100px;
+    }
+
+    .calendar-day-task {
+        padding: 12px 14px;
+    }
+
     /* モーダル */
     .modal-content {
         width: 95%;
@@ -1010,6 +1109,7 @@ nav {
 
     .form-group input[type="text"],
     .form-group input[type="date"],
+    .form-group input[type="datetime-local"],
     .form-group select,
     .form-group textarea {
         padding: 14px;
@@ -1365,6 +1465,7 @@ nav {
     -webkit-box-orient: vertical;
     cursor: pointer;
     transition: all 0.3s ease;
+    white-space: pre-wrap;
 }
 
 .task-card-memo.expanded {
